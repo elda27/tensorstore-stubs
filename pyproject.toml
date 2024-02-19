@@ -1,0 +1,15 @@
+[project]
+name = "tensorstore-stubs"
+version = "0.1.1"
+description = "Type stubs for tensorstore"
+authors = [{ name = "elda27", email = "kaz.birdstick@gmail.com" }]
+dependencies = ["tensorstore>=0.1.45"]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[tool.setuptools.packages.find]
+include = ["tensorstore-stubs"]
+
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
