@@ -1,9 +1,9 @@
 # tensorstore-stubs
-[![Python](https://img.shields.io/pypi/pyversions/tensorstore-stubs.svg)](https://pypi.org/project/tensorstore-stubs/)
+[![Python](https://img.shields.io/pypi/v/tensorstore-stubs)](https://pypi.org/project/tensorstore-stubs/)
 [![PyPI version](https://badge.fury.io/py/tensorstore-stubs.svg)](https://badge.fury.io/py/tensorstore-stubs)
-[![Downloads](https://static.pepy.tech/badge/tensorstore-stubs)](https://pepy.tech/project/tensorstore-stubs)
-[![License](https://img.shields.io/pypi/l/tensorstore-stubs.svg)](https://github.com/elda27/tensorstore-stubs/blob/main/LICENSE)
+[![PyPI - License](https://img.shields.io/pypi/l/tensorstore-stubs)](https://github.com/elda27/tensorstore-stubs/blob/main/LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/tensorstore-stubs)
 
 
 ## What is it ?
