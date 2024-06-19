@@ -1,20 +1,30 @@
 from typing import (
-    Optional,
-    Tuple,
     Any,
-    Union,
-    Sequence,
-    List,
     Callable,
+    Generic,
+    Iterator,
+    List,
     Literal,
+    Optional,
+    overload,
+    Self,
+    Sequence,
+    SupportsIndex,
+    Tuple,
     TypeAlias,
+    TypeVar,
+    Union,
 )
 from numbers import Real
 import numpy
 import numpy.typing
 import asyncio
+import builtins
 
 DimSelectionLike = Union[int, slice, str, List[Union[int, slice, str]]]
+SingleIndex = Union[int, slice, None, SupportsIndex, Ellipsis, numpy.typing.ArrayLike]
+NumpyIndexingSpec: TypeAlias = Union[SingleIndex, tuple[SingleIndex, ...]]
+T = TypeVar("T")
 
 class ChunkLayout:
     class Grid:
@@ -40,7 +50,9 @@ class ChunkLayout:
         def shape_soft_constraint(
             arg0: ChunkLayout.Grid,
         ) -> Optional[Tuple[Optional[int], ...]]: ...
-        def to_json(self: ChunkLayout.Grid, include_defaults: bool = False) -> Any: ...
+        def to_json(
+            self: ChunkLayout.Grid, include_defaults: builtins.bool = False
+        ) -> Any: ...
         def update(
             self: ChunkLayout.Grid,
             *,
@@ -52,7 +64,7 @@ class ChunkLayout:
             elements: Optional[int] = None,
             elements_soft_constraint: Optional[int] = None,
             grid: Optional[ChunkLayout.Grid] = None,
-            grid_soft_constraint: Optional[ChunkLayout.Grid] = None
+            grid_soft_constraint: Optional[ChunkLayout.Grid] = None,
         ) -> None: ...
 
     @property
@@ -118,7 +130,7 @@ class ChunkLayout:
         read_chunk_elements_soft_constraint: Optional[int] = None,
         codec_chunk_elements: Optional[int] = None,
         codec_chunk_elements_soft_constraint: Optional[int] = None,
-        finalize: Optional[bool] = None
+        finalize: Optional[builtins.bool] = None,
     ) -> None: ...
     @property
     def write_chunk(arg0: ChunkLayout) -> ChunkLayout.Grid: ...
@@ -126,34 +138,39 @@ class ChunkLayout:
     def write_chunk_template(arg0: ChunkLayout) -> IndexDomain: ...
 
 class CodecSpec:
-    def to_json(self: CodecSpec, include_defaults: bool = False) -> Any: ...
+    def to_json(self: CodecSpec, include_defaults: builtins.bool = False) -> Any: ...
 
 class Context:
     class Resource:
-        def to_json(self: Context.Resource, include_defaults: bool = False) -> Any: ...
+        def to_json(
+            self: Context.Resource, include_defaults: builtins.bool = False
+        ) -> Any: ...
 
     class Spec:
-        def to_json(self: Context.Spec, include_defaults: bool = False) -> Any: ...
+        def to_json(
+            self: Context.Spec, include_defaults: builtins.bool = False
+        ) -> Any: ...
 
     @property
     def parent(arg0: Context) -> Context: ...
     @property
     def spec(arg0: Context) -> Context.Spec: ...
+    def __getitem__(self, key: str) -> Context.Resource: ...
 
 class Dim:
     @property
-    def empty(arg0: Dim) -> bool: ...
+    def empty(arg0: Dim) -> builtins.bool: ...
     @property
     def exclusive_max(arg0: Dim) -> int: ...
     @property
     def exclusive_min(arg0: Dim) -> int: ...
     @property
-    def finite(arg0: Dim) -> bool: ...
+    def finite(arg0: Dim) -> builtins.bool: ...
     def hull(self: Dim, other: Dim) -> Dim: ...
     @property
-    def implicit_lower(arg0: Dim) -> bool: ...
+    def implicit_lower(arg0: Dim) -> builtins.bool: ...
     @property
-    def implicit_upper(arg0: Dim) -> bool: ...
+    def implicit_upper(arg0: Dim) -> builtins.bool: ...
     @property
     def inclusive_max(arg0: Dim) -> int: ...
     @property
@@ -163,8 +180,15 @@ class Dim:
     def label(arg0: Dim) -> str: ...
     @property
     def size(arg0: Dim) -> int: ...
+    @overload
+    def __contains__(self, other: int) -> builtins.bool: ...
+    @overload
+    def __contains__(self, inner: Dim) -> builtins.bool: ...
+    def __iter__(self) -> Iterator[int]: ...
+    def __eq__(self, other: object) -> builtins.bool: ...
 
 class DimExpression:
+    def __getitem__(self, indices: NumpyIndexingSpec) -> Self: ...
     @property
     def diagonal(arg0: DimExpression) -> DimExpression: ...
     @property
@@ -186,21 +210,23 @@ class DimExpression:
     @property
     def vindex(arg0: object) -> DimExpression: ...
 
-class Future:
-    def add_done_callback(self: Future, callback: Callable[[Future], None]) -> None: ...
-    def cancel(self: Future) -> bool: ...
-    def cancelled(self: Future) -> bool: ...
-    def done(self: Future) -> bool: ...
+class d(DimExpression):
+    @classmethod
+    def __class_getitem__(cls, key: DimSelectionLike) -> d: ...
+
+class Future(Generic[T]):
+    def add_done_callback(self, callback: Callable[[Self], None]) -> None: ...
+    def cancel(self) -> builtins.bool: ...
+    def cancelled(self) -> builtins.bool: ...
+    def done(self) -> builtins.bool: ...
     def exception(
-        self: Future, timeout: Optional[float] = None, deadline: Optional[float] = None
-    ) -> object: ...
-    def force(self: Future) -> None: ...
-    def remove_done_callback(
-        self: Future, callback: Callable[[Future], None]
-    ) -> int: ...
+        self, timeout: Optional[float] = None, deadline: Optional[float] = None
+    ) -> BaseException | None: ...
+    def force(self) -> None: ...
+    def remove_done_callback(self, callback: Callable[[Self], None]) -> int: ...
     def result(
-        self: Future, timeout: Optional[float] = None, deadline: Optional[float] = None
-    ) -> object: ...
+        self, timeout: Optional[float] = None, deadline: Optional[float] = None
+    ) -> T: ...
 
 class FutureLike:
     pass
@@ -212,9 +238,9 @@ class IndexDomain:
     def exclusive_max(arg0: IndexDomain) -> Tuple[int, ...]: ...
     def hull(self: IndexDomain, other: IndexDomain) -> IndexDomain: ...
     @property
-    def implicit_lower_bounds(arg0: IndexDomain) -> Tuple[bool, ...]: ...
+    def implicit_lower_bounds(arg0: IndexDomain) -> Tuple[builtins.bool, ...]: ...
     @property
-    def implicit_upper_bounds(arg0: IndexDomain) -> Tuple[bool, ...]: ...
+    def implicit_upper_bounds(arg0: IndexDomain) -> Tuple[builtins.bool, ...]: ...
     @property
     def inclusive_max(arg0: IndexDomain) -> Tuple[int, ...]: ...
     @property
@@ -255,9 +281,9 @@ class IndexTransform:
     @property
     def domain(arg0: IndexTransform) -> IndexDomain: ...
     @property
-    def implicit_lower_bounds(arg0: IndexTransform) -> Tuple[bool, ...]: ...
+    def implicit_lower_bounds(arg0: IndexTransform) -> Tuple[builtins.bool, ...]: ...
     @property
-    def implicit_upper_bounds(arg0: IndexTransform) -> Tuple[bool, ...]: ...
+    def implicit_upper_bounds(arg0: IndexTransform) -> Tuple[builtins.bool, ...]: ...
     @property
     def input_exclusive_max(arg0: IndexTransform) -> Tuple[int, ...]: ...
     @property
@@ -310,7 +336,7 @@ class KvStore:
     class KeyRange:
         def copy(self: KvStore.KeyRange) -> KvStore.KeyRange: ...
         @property
-        def empty(arg0: KvStore.KeyRange) -> bool: ...
+        def empty(arg0: KvStore.KeyRange) -> builtins.bool: ...
         @property
         def exclusive_max(arg0: KvStore.KeyRange) -> str: ...
         @property
@@ -332,13 +358,15 @@ class KvStore:
         def copy(self: KvStore.Spec) -> KvStore.Spec: ...
         @property
         def path(arg0: KvStore.Spec) -> str: ...
-        def to_json(self: KvStore.Spec, include_defaults: bool = False) -> Any: ...
+        def to_json(
+            self: KvStore.Spec, include_defaults: builtins.bool = False
+        ) -> Any: ...
         def update(
             self: KvStore.Spec,
             *,
-            unbind_context: Optional[bool] = None,
-            strip_context: Optional[bool] = None,
-            context: Optional[Context] = None
+            unbind_context: Optional[builtins.bool] = None,
+            strip_context: Optional[builtins.bool] = None,
+            context: Optional[Context] = None,
         ) -> None: ...
         @property
         def url(arg0: KvStore.Spec) -> str: ...
@@ -349,6 +377,9 @@ class KvStore:
         @property
         def time(arg0: KvStore.TimestampedStorageGeneration) -> float: ...
 
+    def __getitem__(self, key: str) -> bytes: ...
+    def __setitem__(self, key: str, value: Optional[str]) -> None: ...
+    def __delitem__(self, key: str) -> None: ...
     @property
     def base(arg0: KvStore) -> Optional[KvStore]: ...
     def copy(self: KvStore) -> KvStore: ...
@@ -368,7 +399,7 @@ class KvStore:
         spec: Union[KvStore.Spec, Any],
         *,
         context: Optional[Context] = None,
-        transaction: Optional[Transaction] = None
+        transaction: Optional[Transaction] = None,
     ) -> Future[KvStore]: ...
     @property
     def path(arg0: KvStore) -> str: ...
@@ -377,13 +408,13 @@ class KvStore:
         key: str,
         *,
         if_not_equal: Optional[str] = None,
-        staleness_bound: Optional[float] = None
+        staleness_bound: Optional[float] = None,
     ) -> Future[KvStore.ReadResult]: ...
     def spec(
         self: KvStore,
         *,
-        retain_context: Optional[bool] = None,
-        unbind_context: Optional[bool] = None
+        retain_context: Optional[builtins.bool] = None,
+        unbind_context: Optional[builtins.bool] = None,
     ) -> KvStore.Spec: ...
     @property
     def transaction(arg0: KvStore) -> Optional[Transaction]: ...
@@ -398,15 +429,15 @@ class KvStore:
 
 class OpenMode:
     @property
-    def assume_cached_metadata(arg0: OpenMode) -> bool: ...
+    def assume_cached_metadata(arg0: OpenMode) -> builtins.bool: ...
     @property
-    def assume_metadata(arg0: OpenMode) -> bool: ...
+    def assume_metadata(arg0: OpenMode) -> builtins.bool: ...
     @property
-    def create(arg0: OpenMode) -> bool: ...
+    def create(arg0: OpenMode) -> builtins.bool: ...
     @property
-    def delete_existing(arg0: OpenMode) -> bool: ...
+    def delete_existing(arg0: OpenMode) -> builtins.bool: ...
     @property
-    def open(arg0: OpenMode) -> bool: ...
+    def open(arg0: OpenMode) -> builtins.bool: ...
 
 class OutputIndexMap:
     @property
@@ -474,7 +505,7 @@ class Schema:
     def shape(arg0: Schema) -> Tuple[int, ...]: ...
     @property
     def size(arg0: Schema) -> int: ...
-    def to_json(self: Schema, include_defaults: bool = False) -> Any: ...
+    def to_json(self: Schema, include_defaults: builtins.bool = False) -> Any: ...
     @property
     def translate_backward_by(arg0: object) -> Schema._TranslateBackwardBy: ...
     @property
@@ -495,7 +526,7 @@ class Schema:
         dimension_units: Optional[
             Sequence[Optional[Union[Unit, str, Real, Tuple[Real, str]]]]
         ] = None,
-        schema: Optional[Schema] = None
+        schema: Optional[Schema] = None,
     ) -> None: ...
     @property
     def vindex(arg0: object) -> Schema._Vindex: ...
@@ -540,7 +571,7 @@ class Spec:
     def shape(arg0: Spec) -> Tuple[int, ...]: ...
     @property
     def size(arg0: Spec) -> int: ...
-    def to_json(self: Spec, include_defaults: bool = False) -> Any: ...
+    def to_json(self: Spec, include_defaults: builtins.bool = False) -> Any: ...
     @property
     def transform(arg0: Spec) -> Optional[IndexTransform]: ...
     @property
@@ -554,13 +585,13 @@ class Spec:
         self: Spec,
         *,
         open_mode: Optional[OpenMode] = None,
-        open: Optional[bool] = None,
-        create: Optional[bool] = None,
-        delete_existing: Optional[bool] = None,
-        assume_metadata: Optional[bool] = None,
-        assume_cached_metadata: Optional[bool] = None,
-        unbind_context: Optional[bool] = None,
-        strip_context: Optional[bool] = None,
+        open: Optional[builtins.bool] = None,
+        create: Optional[builtins.bool] = None,
+        delete_existing: Optional[builtins.bool] = None,
+        assume_metadata: Optional[builtins.bool] = None,
+        assume_cached_metadata: Optional[builtins.bool] = None,
+        unbind_context: Optional[builtins.bool] = None,
+        strip_context: Optional[builtins.bool] = None,
         context: Optional[Context] = None,
         kvstore: Optional[KvStore.Spec] = None,
         rank: Optional[int] = None,
@@ -573,17 +604,37 @@ class Spec:
         dimension_units: Optional[
             Sequence[Optional[Union[Unit, str, Real, Tuple[Real, str]]]]
         ] = None,
-        schema: Optional[Schema] = None
+        schema: Optional[Schema] = None,
     ) -> None: ...
     @property
     def vindex(arg0: object) -> Spec._Vindex: ...
 
 class TensorStore:
+    class _Oindex:
+        def __getitem__(self, indices: NumpyIndexingSpec) -> TensorStore: ...
+        def __setitem__(
+            self,
+            indices: NumpyIndexingSpec,
+            source: Union[TensorStore, numpy.typing.ArrayLike],
+        ) -> TensorStore: ...
+
+    class _Vindex:
+        def __getitem__(self, indices: NumpyIndexingSpec) -> TensorStore: ...
+        def __setitem__(
+            self,
+            indices: NumpyIndexingSpec,
+            source: Union[TensorStore, numpy.typing.ArrayLike],
+        ) -> TensorStore: ...
+
     class StorageStatistics:
         @property
-        def fully_stored(arg0: TensorStore.StorageStatistics) -> Optional[bool]: ...
+        def fully_stored(
+            arg0: TensorStore.StorageStatistics,
+        ) -> Optional[builtins.bool]: ...
         @property
-        def not_stored(arg0: TensorStore.StorageStatistics) -> Optional[bool]: ...
+        def not_stored(
+            arg0: TensorStore.StorageStatistics,
+        ) -> Optional[builtins.bool]: ...
 
     @property
     def T(arg0: TensorStore) -> TensorStore: ...
@@ -612,8 +663,38 @@ class TensorStore:
     def mode(arg0: TensorStore) -> str: ...
     @property
     def ndim(arg0: TensorStore) -> int: ...
+    @overload
+    def __getitem__(self, transform: IndexTransform) -> Self: ...
+    @overload
+    def __getitem__(self, domain: IndexDomain) -> Self: ...
+    @overload
+    def __getitem__(self, expr: DimExpression) -> Self: ...
+    @overload
+    def __getitem__(self, indices: NumpyIndexingSpec) -> Self: ...
+    @overload
+    def __setitem__(
+        self,
+        transform: IndexTransform,
+        source: Union[TensorStore, numpy.typing.ArrayLike],
+    ) -> None: ...
+    @overload
+    def __setitem__(
+        self, domain: IndexDomain, source: Union[TensorStore, numpy.typing.ArrayLike]
+    ) -> None: ...
+    @overload
+    def __setitem__(
+        self, expr: DimExpression, source: Union[TensorStore, numpy.typing.ArrayLike]
+    ) -> None: ...
+    @overload
+    def __setitem__(
+        self,
+        indices: NumpyIndexingSpec,
+        source: Union[TensorStore, numpy.typing.ArrayLike],
+    ) -> None: ...
     @property
-    def oindex(arg0: object) -> TensorStore: ...
+    def oindex(self) -> _Oindex: ...
+    @property
+    def vindex(self) -> _Vindex: ...
     @property
     def origin(arg0: TensorStore) -> Tuple[int, ...]: ...
     @property
@@ -622,18 +703,18 @@ class TensorStore:
         self: TensorStore, order: Literal["C", "F"] = "C"
     ) -> Future[numpy.typing.ArrayLike]: ...
     @property
-    def readable(arg0: TensorStore) -> bool: ...
+    def readable(arg0: TensorStore) -> builtins.bool: ...
     def resize(
         self: TensorStore,
         inclusive_min: Optional[Sequence[Optional[int]]] = None,
         exclusive_max: Optional[Sequence[Optional[int]]] = None,
-        resize_metadata_only: bool = False,
-        resize_tied_bounds: bool = False,
-        expand_only: bool = False,
-        shrink_only: bool = False,
+        resize_metadata_only: builtins.bool = False,
+        resize_tied_bounds: builtins.bool = False,
+        expand_only: builtins.bool = False,
+        shrink_only: builtins.bool = False,
     ) -> Future[TensorStore]: ...
     def resolve(
-        self: TensorStore, fix_resizable_bounds: bool = False
+        self: TensorStore, fix_resizable_bounds: builtins.bool = False
     ) -> Future[TensorStore]: ...
     @property
     def schema(arg0: TensorStore) -> Schema: ...
@@ -645,20 +726,20 @@ class TensorStore:
         self: TensorStore,
         *,
         open_mode: Optional[OpenMode] = None,
-        open: Optional[bool] = None,
-        create: Optional[bool] = None,
-        delete_existing: Optional[bool] = None,
-        assume_metadata: Optional[bool] = None,
-        assume_cached_metadata: Optional[bool] = None,
-        minimal_spec: Optional[bool] = None,
-        retain_context: Optional[bool] = None,
-        unbind_context: Optional[bool] = None
+        open: Optional[builtins.bool] = None,
+        create: Optional[builtins.bool] = None,
+        delete_existing: Optional[builtins.bool] = None,
+        assume_metadata: Optional[builtins.bool] = None,
+        assume_cached_metadata: Optional[builtins.bool] = None,
+        minimal_spec: Optional[builtins.bool] = None,
+        retain_context: Optional[builtins.bool] = None,
+        unbind_context: Optional[builtins.bool] = None,
     ) -> Spec: ...
     def storage_statistics(
         self: TensorStore,
         *,
-        query_not_stored: bool = False,
-        query_fully_stored: bool = False
+        query_not_stored: builtins.bool = False,
+        query_fully_stored: builtins.bool = False,
     ) -> Future[TensorStore.StorageStatistics]: ...
     @property
     def transaction(arg0: TensorStore) -> Optional[Transaction]: ...
@@ -671,31 +752,32 @@ class TensorStore:
     def transpose(
         self: TensorStore, axes: Optional[DimSelectionLike] = None
     ) -> TensorStore: ...
-    @property
-    def vindex(arg0: object) -> TensorStore: ...
     def with_transaction(
         self: TensorStore, transaction: Optional[Transaction]
     ) -> TensorStore: ...
     @property
-    def writable(arg0: TensorStore) -> bool: ...
+    def writable(arg0: TensorStore) -> builtins.bool: ...
     def write(
         self: TensorStore, source: Union[TensorStore, numpy.typing.ArrayLike]
     ) -> WriteFutures: ...
+    def __array__(
+        self, dtype: Optional[numpy.dtype] = None, context: Optional[object] = None
+    ) -> numpy.typing.ArrayLike: ...
 
 class Transaction:
     def abort(self: Transaction) -> None: ...
     @property
-    def aborted(arg0: Transaction) -> bool: ...
+    def aborted(arg0: Transaction) -> builtins.bool: ...
     @property
-    def atomic(arg0: Transaction) -> bool: ...
+    def atomic(arg0: Transaction) -> builtins.bool: ...
     def commit_async(self: Transaction) -> Future[None]: ...
     @property
-    def commit_started(arg0: Transaction) -> bool: ...
+    def commit_started(arg0: Transaction) -> builtins.bool: ...
     def commit_sync(self: Transaction) -> None: ...
     @property
     def future(arg0: Transaction) -> Future[None]: ...
     @property
-    def open(arg0: Transaction) -> bool: ...
+    def open(arg0: Transaction) -> builtins.bool: ...
 
 class Unit:
     @property
@@ -718,13 +800,13 @@ class WriteFutures:
     def add_done_callback(
         self: WriteFutures, callback: Callable[[Future], None]
     ) -> None: ...
-    def cancel(self: WriteFutures) -> bool: ...
-    def cancelled(self: WriteFutures) -> bool: ...
+    def cancel(self: WriteFutures) -> builtins.bool: ...
+    def cancelled(self: WriteFutures) -> builtins.bool: ...
     @property
     def commit(arg0: WriteFutures) -> Future[None]: ...
     @property
     def copy(arg0: WriteFutures) -> Future[None]: ...
-    def done(self: WriteFutures) -> bool: ...
+    def done(self: WriteFutures) -> builtins.bool: ...
     def exception(
         self: WriteFutures,
         timeout: Optional[float] = None,
@@ -759,8 +841,8 @@ def concat(
     layers: Sequence[Union[TensorStore, Spec]],
     axis: Union[int, str],
     *,
-    read: Optional[bool] = None,
-    write: Optional[bool] = None,
+    read: Optional[builtins.bool] = None,
+    write: Optional[builtins.bool] = None,
     context: Optional[Context] = None,
     transaction: Optional[Transaction] = None,
     rank: Optional[int] = None,
@@ -770,31 +852,8 @@ def concat(
     dimension_units: Optional[
         Sequence[Optional[Union[Unit, str, Real, Tuple[Real, str]]]]
     ] = None,
-    schema: Optional[Schema] = None
+    schema: Optional[Schema] = None,
 ) -> TensorStore: ...
-
-class d:
-    @property
-    def diagonal(arg0: DimExpression) -> DimExpression: ...
-    @property
-    def label(arg0: object) -> DimExpression: ...
-    @property
-    def mark_bounds_implicit(arg0: object) -> DimExpression: ...
-    @property
-    def oindex(arg0: object) -> DimExpression: ...
-    @property
-    def stride(arg0: object) -> DimExpression: ...
-    @property
-    def translate_backward_by(arg0: object) -> DimExpression: ...
-    @property
-    def translate_by(arg0: object) -> DimExpression: ...
-    @property
-    def translate_to(arg0: object) -> DimExpression: ...
-    @property
-    def transpose(arg0: object) -> DimExpression: ...
-    @property
-    def vindex(arg0: object) -> DimExpression: ...
-
 def downsample(*args, **kwargs): ...
 
 class dtype:
@@ -807,7 +866,7 @@ class dtype:
     def type(arg0: dtype) -> object: ...
 
 def experimental_collect_matching_metrics(
-    metric_prefix: str = "", include_zero_metrics: bool = False
+    metric_prefix: str = "", include_zero_metrics: builtins.bool = False
 ) -> List[Any]: ...
 def experimental_collect_prometheus_format_metrics(
     metric_prefix: str = "",
@@ -836,14 +895,14 @@ newaxis = None
 def open(
     spec: Union[Spec, Any],
     *,
-    read: Optional[bool] = None,
-    write: Optional[bool] = None,
+    read: Optional[builtins.bool] = None,
+    write: Optional[builtins.bool] = None,
     open_mode: Optional[OpenMode] = None,
-    open: Optional[bool] = None,
-    create: Optional[bool] = None,
-    delete_existing: Optional[bool] = None,
-    assume_metadata: Optional[bool] = None,
-    assume_cached_metadata: Optional[bool] = None,
+    open: Optional[builtins.bool] = None,
+    create: Optional[builtins.bool] = None,
+    delete_existing: Optional[builtins.bool] = None,
+    assume_metadata: Optional[builtins.bool] = None,
+    assume_cached_metadata: Optional[builtins.bool] = None,
     context: Optional[Context] = None,
     transaction: Optional[Transaction] = None,
     kvstore: Optional[KvStore.Spec] = None,
@@ -857,13 +916,13 @@ def open(
     dimension_units: Optional[
         Sequence[Optional[Union[Unit, str, Real, Tuple[Real, str]]]]
     ] = None,
-    schema: Optional[Schema] = None
+    schema: Optional[Schema] = None,
 ) -> Future[TensorStore]: ...
 def overlay(
     layers: Sequence[Union[TensorStore, Spec]],
     *,
-    read: Optional[bool] = None,
-    write: Optional[bool] = None,
+    read: Optional[builtins.bool] = None,
+    write: Optional[builtins.bool] = None,
     context: Optional[Context] = None,
     transaction: Optional[Transaction] = None,
     rank: Optional[int] = None,
@@ -873,14 +932,14 @@ def overlay(
     dimension_units: Optional[
         Sequence[Optional[Union[Unit, str, Real, Tuple[Real, str]]]]
     ] = None,
-    schema: Optional[Schema] = None
+    schema: Optional[Schema] = None,
 ) -> TensorStore: ...
 def stack(
     layers: Sequence[Union[TensorStore, Spec]],
     axis: int = 0,
     *,
-    read: Optional[bool] = None,
-    write: Optional[bool] = None,
+    read: Optional[builtins.bool] = None,
+    write: Optional[builtins.bool] = None,
     context: Optional[Context] = None,
     transaction: Optional[Transaction] = None,
     rank: Optional[int] = None,
@@ -890,7 +949,7 @@ def stack(
     dimension_units: Optional[
         Sequence[Optional[Union[Unit, str, Real, Tuple[Real, str]]]]
     ] = None,
-    schema: Optional[Schema] = None
+    schema: Optional[Schema] = None,
 ) -> TensorStore: ...
 
 string = dtype("string")
@@ -925,5 +984,5 @@ def virtual_chunked(
     ] = None,
     schema: Optional[Schema] = None,
     context: Optional[Context] = None,
-    transaction: Optional[Transaction] = None
+    transaction: Optional[Transaction] = None,
 ) -> TensorStore: ...
