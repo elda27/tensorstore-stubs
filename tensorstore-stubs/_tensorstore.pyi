@@ -21,8 +21,9 @@ import numpy.typing
 import asyncio
 import builtins
 
-DimSelectionLike = Union[int, slice, str, List[Union[int, slice, str]]]
-SingleIndex = Union[int, slice, None, SupportsIndex, Ellipsis, numpy.typing.ArrayLike]
+SingleDimsSelection = Union[SupportsIndex, slice, str]
+DimSelectionLike = Union[SingleDimsSelection, Sequence[SingleDimsSelection]]
+SingleIndex = Union[SupportsIndex, slice, None, Ellipsis, numpy.typing.ArrayLike]
 NumpyIndexingSpec: TypeAlias = Union[SingleIndex, tuple[SingleIndex, ...]]
 T = TypeVar("T")
 
