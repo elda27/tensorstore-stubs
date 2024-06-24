@@ -1,11 +1,11 @@
 from typing import (
     Any,
     Callable,
-    Generic,
     Iterator,
     List,
     Literal,
     Optional,
+    Protocol,
     overload,
     Self,
     Sequence,
@@ -21,10 +21,11 @@ import numpy.typing
 import asyncio
 import builtins
 
-DimSelectionLike = Union[int, slice, str, List[Union[int, slice, str]]]
-SingleIndex = Union[int, slice, None, SupportsIndex, Ellipsis, numpy.typing.ArrayLike]
+SingleDimsSelection = Union[SupportsIndex, slice, str]
+DimSelectionLike = Union[SingleDimsSelection, Sequence[SingleDimsSelection]]
+SingleIndex = Union[SupportsIndex, slice, None, Ellipsis, numpy.typing.ArrayLike]
 NumpyIndexingSpec: TypeAlias = Union[SingleIndex, tuple[SingleIndex, ...]]
-T = TypeVar("T")
+ResultType = TypeVar("ResultType", covariant=True)
 
 class ChunkLayout:
     class Grid:
@@ -214,7 +215,7 @@ class d(DimExpression):
     @classmethod
     def __class_getitem__(cls, key: DimSelectionLike) -> d: ...
 
-class Future(Generic[T]):
+class _FutureProtocol(Protocol[ResultType]):
     def add_done_callback(self, callback: Callable[[Self], None]) -> None: ...
     def cancel(self) -> builtins.bool: ...
     def cancelled(self) -> builtins.bool: ...
@@ -226,7 +227,10 @@ class Future(Generic[T]):
     def remove_done_callback(self, callback: Callable[[Self], None]) -> int: ...
     def result(
         self, timeout: Optional[float] = None, deadline: Optional[float] = None
-    ) -> T: ...
+    ) -> ResultType: ...
+
+class Future(_FutureProtocol[ResultType]):
+    ...
 
 class FutureLike:
     pass
@@ -796,30 +800,12 @@ class VirtualChunkedWriteParameters:
     @property
     def if_equal(arg0: VirtualChunkedWriteParameters) -> bytes: ...
 
-class WriteFutures:
-    def add_done_callback(
-        self: WriteFutures, callback: Callable[[Future], None]
-    ) -> None: ...
-    def cancel(self: WriteFutures) -> builtins.bool: ...
-    def cancelled(self: WriteFutures) -> builtins.bool: ...
+class WriteFutures(_FutureProtocol[None]):
     @property
-    def commit(arg0: WriteFutures) -> Future[None]: ...
+    def commit(self) -> Future[None]: ...
     @property
-    def copy(arg0: WriteFutures) -> Future[None]: ...
-    def done(self: WriteFutures) -> builtins.bool: ...
-    def exception(
-        self: WriteFutures,
-        timeout: Optional[float] = None,
-        deadline: Optional[float] = None,
-    ) -> object: ...
-    def remove_done_callback(
-        self: WriteFutures, callback: Callable[[Future], None]
-    ) -> int: ...
-    def result(
-        self: WriteFutures,
-        timeout: Optional[float] = None,
-        deadline: Optional[float] = None,
-    ) -> object: ...
+    def copy(self) -> Future[None]: ...
+
 
 def array(
     array: numpy.typing.ArrayLike,
