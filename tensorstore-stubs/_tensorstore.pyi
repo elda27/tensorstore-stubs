@@ -1,3 +1,6 @@
+import asyncio
+import builtins
+from numbers import Real
 from typing import (
     Any,
     Callable,
@@ -6,7 +9,6 @@ from typing import (
     Literal,
     Optional,
     Protocol,
-    overload,
     Self,
     Sequence,
     SupportsIndex,
@@ -14,12 +16,11 @@ from typing import (
     TypeAlias,
     TypeVar,
     Union,
+    overload,
 )
-from numbers import Real
+
 import numpy
 import numpy.typing
-import asyncio
-import builtins
 
 SingleDimsSelection = Union[SupportsIndex, slice, str]
 DimSelectionLike = Union[SingleDimsSelection, Sequence[SingleDimsSelection]]
@@ -211,6 +212,9 @@ class DimExpression:
     @property
     def vindex(arg0: object) -> DimExpression: ...
 
+class _DimSelection:
+    pass
+
 class d(DimExpression):
     @classmethod
     def __class_getitem__(cls, key: DimSelectionLike) -> d: ...
@@ -229,8 +233,7 @@ class _FutureProtocol(Protocol[ResultType]):
         self, timeout: Optional[float] = None, deadline: Optional[float] = None
     ) -> ResultType: ...
 
-class Future(_FutureProtocol[ResultType]):
-    ...
+class Future(_FutureProtocol[ResultType]): ...
 
 class FutureLike:
     pass
@@ -805,7 +808,6 @@ class WriteFutures(_FutureProtocol[None]):
     def commit(self) -> Future[None]: ...
     @property
     def copy(self) -> Future[None]: ...
-
 
 def array(
     array: numpy.typing.ArrayLike,
