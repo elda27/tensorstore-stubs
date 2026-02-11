@@ -128,8 +128,8 @@ def _recurse_replace(annotation: ast.AST) -> ast.AST:
     elif getattr(annotation, "id", "") == "ellipsis":
         # Replace NoneType with None
         annotation.id = "..."
-    elif getattr(annotation, "id", "") == "numpy.ndarray":
-        annotation.id = "numpy.typing.ArrayLike"
+    # elif getattr(annotation, "id", "") == "numpy.ndarray":
+    #     annotation.id = "numpy.typing.ArrayLike"
     # Standard cases
 
     elif isinstance(annotation, ast.Subscript):

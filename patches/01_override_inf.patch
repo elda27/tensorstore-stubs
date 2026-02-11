@@ -1,0 +1,11 @@
+--- ./tensorstore-stubs/_tensorstore.pyi  2026-02-11 16:18:20.062449800 +0900
++++ ./tensorstore-stubs/_tensorstore.pyi  2026-02-11 16:16:36.783004000 +0900
+@@ -1095,7 +1095,7 @@
+ float8_e4m3fnuz = dtype("float8_e4m3fnuz")
+ float8_e5m2 = dtype("float8_e5m2")
+ float8_e5m2fnuz = dtype("float8_e5m2fnuz")
+-inf = 4611686018427387903
++inf = numpy.inf
+ int16 = dtype("int16")
+ int2 = dtype("int2")
+ int32 = dtype("int32")
