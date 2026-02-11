@@ -2500,7 +2500,7 @@
     },
     "d": {
         "ast": "AnnAssign(target=Name(id='d', ctx=Store()), annotation=Constant(value='_DimSelection'), value=Constant(value=Ellipsis), simple=1)",
-        "definition": "<tensorstore._DimSelection object at 0x00000222D0B7B2B0>",
+        "definition": "<tensorstore._DimSelection object at 0x00000241E3BCB570>",
         "doc": null,
         "type": "unknown"
     },

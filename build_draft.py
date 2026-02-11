@@ -121,12 +121,16 @@ def _process_func_decleration(name: str) -> str:
 
 
 def _recurse_replace(annotation: ast.AST) -> ast.AST:
+    # Special cases
     if getattr(annotation, "id", "") == "bool":
         # Replace bool with builtins.bool
         annotation.id = "builtins.bool"
     elif getattr(annotation, "id", "") == "ellipsis":
         # Replace NoneType with None
         annotation.id = "..."
+    elif getattr(annotation, "id", "") == "numpy.ndarray":
+        annotation.id = "numpy.typing.ArrayLike"
+    # Standard cases
 
     elif isinstance(annotation, ast.Subscript):
         annotation.slice = _recurse_replace(annotation.slice)
@@ -254,7 +258,7 @@ def parse_statement(key: str, statement: Any) -> dict:
         if statement.__doc__ is not None:
             return _parse_func(key, statement)
         else:
-            return _parse_unknown(key, statement, type_name="unknown_mwrhod")
+            return _parse_unknown(key, statement, type_name="unknown_method")
     elif isinstance(statement, type):
         if statement.__doc__ is not None:
             return _parse_class(key, statement)
